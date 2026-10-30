@@ -7,6 +7,33 @@ public class Peserta extends Orang {
     }
     private String nim;
     private String prodi;
+    private String jenisKelamin;
+private String email;
+
+public Peserta(String nim, String nama, String jenisKelamin,
+               String prodi, String noHp, String email) {
+    super(0, nama, noHp);
+    this.nim = nim;
+    this.jenisKelamin = jenisKelamin;
+    this.prodi = prodi;
+    this.email = email;
+}
+
+public String getJenisKelamin() {
+    return jenisKelamin;
+}
+
+public void setJenisKelamin(String jenisKelamin) {
+    this.jenisKelamin = jenisKelamin;
+}
+
+public String getEmail() {
+    return email;
+}
+
+public void setEmail(String email) {
+    this.email = email;
+}
     public Peserta(int id, String nama, String noHp,
                    String nim, String prodi) {
         super(id, nama, noHp);
