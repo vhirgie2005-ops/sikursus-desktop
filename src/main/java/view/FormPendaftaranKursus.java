@@ -73,17 +73,17 @@ public class FormPendaftaranKursus extends javax.swing.JFrame {
         jLabel5.setText("Kursus");
 
         txtNamaPeserta.setForeground(new java.awt.Color(101, 72, 49));
-        txtNamaPeserta.addActionListener(this::txtNamaPesertaActionPerformed);
+        txtNamaPeserta.addActionListener();
 
         btnProsesPendaftaran.setBackground(new java.awt.Color(139, 107, 74));
         btnProsesPendaftaran.setForeground(new java.awt.Color(255, 255, 255));
         btnProsesPendaftaran.setText("Proses");
-        btnProsesPendaftaran.addActionListener(this::btnProsesPendaftaranActionPerformed);
+        btnProsesPendaftaran.addActionListener();
 
         btnResetForm.setBackground(new java.awt.Color(255, 246, 231));
         btnResetForm.setForeground(new java.awt.Color(101, 72, 49));
-        btnResetForm.setText("Resest");
-        btnResetForm.addActionListener(this::btnResetFormActionPerformed);
+        btnResetForm.setText("Reset");
+        btnResetForm.addActionListener();
 
         jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(101, 72, 49));
@@ -109,14 +109,14 @@ public class FormPendaftaranKursus extends javax.swing.JFrame {
 
         cbModulCetak.setForeground(new java.awt.Color(101, 72, 49));
         cbModulCetak.setText("Modul Cetak");
-        cbModulCetak.addActionListener(this::cbModulCetakActionPerformed);
+        cbModulCetak.addActionListener();
 
         cbSertifikat.setForeground(new java.awt.Color(101, 72, 49));
         cbSertifikat.setText("Sertifikat");
 
         cbAksesRekaman.setForeground(new java.awt.Color(101, 72, 49));
         cbAksesRekaman.setText("Akses Rekaman");
-        cbAksesRekaman.addActionListener(this::cbAksesRekamanActionPerformed);
+        cbAksesRekaman.addActionListener();
 
         jPanel2.setBackground(new java.awt.Color(190, 85, 125));
         jPanel2.setForeground(new java.awt.Color(255, 255, 255));
@@ -139,7 +139,7 @@ public class FormPendaftaranKursus extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(15, 15, 15)
                 .addComponent(jLabel1)
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);

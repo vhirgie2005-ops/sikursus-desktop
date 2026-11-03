@@ -1,7 +1,9 @@
 package model;
 
 public class Peserta extends Orang {
-    
+        public Peserta() {
+        super(0, "", "");
+    }
     public Peserta(int id, String nama, String noHp) {
         super(id, nama, noHp);
     }
