@@ -1,297 +1,190 @@
 package view;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Image;
 import java.net.URL;
+import java.sql.Date;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 import model.User;
+import report.ReportService;
 import util.UserSession;
 import util.WindowManager;
 
 public class DashboardFrame extends JFrame {
+    // Palet warna pink yang selaras dengan SIKURSUS Desktop
+    private static final Color PINK_DARK = new Color(176, 75, 118);   // #B04B76 (Header)
+    private static final Color PINK_LIGHT = new Color(249, 224, 234); // #F9E0EA (Menu Bar)
+    private static final Color PINK_BG = new Color(253, 242, 246);    // #FDF2F6 (Background)
 
-    private JLabel lblUser;
-    private JLabel lblRole;
-
-    private JMenuBar menuBar;
-    private JMenu menuMaster, menuTransaksi, menuLaporan, menuKeluar;
-    private JMenuItem miPeserta, miInstruktur, miKursus, miKelas;
-    private JMenuItem miPendaftaran, miPembayaran;
-    private JMenuItem miLaporanPeserta, miLaporanPendaftaran;
-    private JMenuItem miLogout, miTutup;
-
-    private JPopupMenu popupDashboard;
-    private JMenuItem miTentang, miRefresh;
-
-    // --- PALET WARNA PINK MODERN & ELEGAN ---
-    private static final Color COLOR_PRIMARY = new Color(131, 24, 67);      // Rose/Berry Pekat Elegan (#831843)
-    private static final Color COLOR_PRIMARY_DARK = new Color(157, 23, 77); // Varian lebih gelap untuk badge
-    private static final Color COLOR_BG = new Color(253, 242, 248);         // Soft Pink Background Sangat Bersih (#FDF2F8)
-    private static final Color COLOR_CARD_BG = Color.WHITE;
-    private static final Color COLOR_TEXT_DARK = new Color(50, 20, 40);     // Teks gelap dengan sentuhan hangat
-    private static final Color COLOR_TEXT_MUTED = new Color(113, 80, 95);   // Teks abu-pink lembut
+    private final JLabel lblUser = new JLabel();
+    private final JLabel lblRole = new JLabel();
+    private final JMenuItem miUsers = new JMenuItem("Users");
+    private final JMenuItem miPeserta = new JMenuItem("Peserta");
+    private final JMenuItem miInstruktur = new JMenuItem("Instruktur");
+    private final JMenuItem miKursus = new JMenuItem("Kursus");
+    private final JMenuItem miKelas = new JMenuItem("Kelas");
 
     public DashboardFrame() {
-        initComponents();
-        setLocationRelativeTo(null);
+        super("Dashboard - SIKURSUS Desktop");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        ViewUtil.setupFrame(this, 1040, 650);
+        buildMenu();
+        buildBody();
         applySession();
     }
 
-    private void initComponents() {
-        setTitle("Dashboard - SIKURSUS Desktop Management");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(960, 620);
+    private void buildBody() {
+        JPanel root = ViewUtil.root("SIKURSUS Desktop - Dashboard");
+        root.setBackground(PINK_BG);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(COLOR_BG);
-        setContentPane(mainPanel);
+        // Mengubah warna banner header bawaan ViewUtil menjadi pink tua (#B04B76)
+        if (root.getLayout() instanceof BorderLayout) {
+            Component north = ((BorderLayout) root.getLayout()).getLayoutComponent(BorderLayout.NORTH);
+            if (north instanceof JComponent) {
+                north.setBackground(PINK_DARK);
+            }
+        }
 
-        // --- HEADER / BANNER UTAMA ---
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(COLOR_PRIMARY);
-        headerPanel.setBorder(new EmptyBorder(25, 35, 25, 35));
+        JPanel body = ViewUtil.body();
+        body.setBackground(PINK_BG);
 
-        JPanel titleGroup = new JPanel();
-        titleGroup.setLayout(new BoxLayout(titleGroup, BoxLayout.Y_AXIS));
-        titleGroup.setOpaque(false);
+        JPanel session = new JPanel(new GridLayout(2, 1, 2, 2));
+        session.setBackground(ViewUtil.CARD);
+        lblUser.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblUser.setForeground(PINK_DARK);
+        lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblRole.setForeground(ViewUtil.MUTED);
+        session.add(lblUser);
+        session.add(lblRole);
+        body.add(ViewUtil.section("Sesi Pengguna", session), BorderLayout.NORTH);
 
-        JLabel lblAppTitle = new JLabel("SIKURSUS Desktop");
-        lblAppTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblAppTitle.setForeground(Color.WHITE);
+        JTextArea info = new JTextArea(
+                "FINAL PROJECT PBO - Pertemuan 9-14\n\n"
+                + "Gunakan menu di bagian atas untuk mengelola master, transaksi, dan laporan.\n\n"
+                + "Alur utama:\n"
+                + "Master Data -> Kelas -> Pendaftaran -> Pembayaran -> Laporan\n\n"
+                + "Database : db_sikursus\n"
+                + "Arsitektur: View -> DAO -> JDBC -> MySQL\n\n"
+                + "Tips: selesaikan master terlebih dahulu sebelum menguji transaksi."
+        );
+        info.setEditable(false);
+        info.setLineWrap(true);
+        info.setWrapStyleWord(true);
+        info.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        info.setForeground(ViewUtil.TEXT);
+        info.setBackground(ViewUtil.CARD);
+        info.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        body.add(ViewUtil.section("Ringkasan Sistem", info), BorderLayout.CENTER);
 
-        JLabel lblSubHeader = new JLabel("Pusat Kendali Sistem Informasi Manajemen Kursus & Pelatihan");
-        lblSubHeader.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblSubHeader.setForeground(new Color(252, 231, 243)); // Pink muda lembut untuk subheader
+        root.add(body, BorderLayout.CENTER);
+        setContentPane(root);
+    }
 
-        titleGroup.add(lblAppTitle);
-        titleGroup.add(Box.createRigidArea(new Dimension(0, 4)));
-        titleGroup.add(lblSubHeader);
-        headerPanel.add(titleGroup, BorderLayout.WEST);
+    private void buildMenu() {
+        JMenuBar bar = new JMenuBar();
+        bar.setBackground(PINK_LIGHT);
 
-        // User & Role Badge di Header Kanan
-        JPanel userBadgePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
-        userBadgePanel.setOpaque(false);
+        JMenu master = new JMenu("Master");
+        master.add(miUsers);
+        master.add(miPeserta);
+        master.add(miInstruktur);
+        master.add(miKursus);
+        master.add(miKelas);
 
-        JPanel badgeInner = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 6));
-        badgeInner.setBackground(COLOR_PRIMARY_DARK);
-        badgeInner.setBorder(BorderFactory.createEmptyBorder(6, 14, 6, 14));
-        
-        lblUser = new JLabel("User: -");
-        lblUser.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblUser.setForeground(Color.WHITE);
+        JMenu trx = new JMenu("Transaksi");
+        JMenuItem reg = new JMenuItem("Pendaftaran");
+        JMenuItem pay = new JMenuItem("Pembayaran");
+        trx.add(reg);
+        trx.add(pay);
 
-        JLabel sep = new JLabel("|");
-        sep.setForeground(new Color(244, 114, 182));
+        JMenu rep = new JMenu("Laporan");
+        JMenuItem rp = new JMenuItem("Peserta - Semua");
+        JMenuItem rr = new JMenuItem("Pendaftaran - Semua");
+        JMenuItem rt = new JMenuItem("Pembayaran - Semua");
+        JMenuItem rtp = new JMenuItem("Pembayaran - Rentang Tanggal");
+        rep.add(rp);
+        rep.add(rr);
+        rep.add(rt);
+        rep.add(rtp);
 
-        lblRole = new JLabel("Role: -");
-        lblRole.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblRole.setForeground(new Color(254, 240, 138)); // Kuning pastel agar kontras dan manis
+        JMenu out = new JMenu("Keluar");
+        JMenuItem logout = new JMenuItem("Logout");
+        JMenuItem exit = new JMenuItem("Tutup Aplikasi");
+        out.add(logout);
+        out.addSeparator();
+        out.add(exit);
 
-        badgeInner.add(lblUser);
-        badgeInner.add(sep);
-        badgeInner.add(lblRole);
-        userBadgePanel.add(badgeInner);
-        
-        headerPanel.add(userBadgePanel, BorderLayout.EAST);
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        bar.add(master);
+        bar.add(trx);
+        bar.add(rep);
+        bar.add(out);
+        setJMenuBar(bar);
 
-        // --- KONTEN TENGAH (KARTU SAMBUTAN) ---
-        JPanel centerContainer = new JPanel(new GridBagLayout());
-        centerContainer.setOpaque(false);
+        miUsers.addActionListener(e -> WindowManager.open(UserFrame.class, UserFrame::new));
+        miPeserta.addActionListener(e -> WindowManager.open(PesertaFrame.class, PesertaFrame::new));
+        miInstruktur.addActionListener(e -> WindowManager.open(InstrukturFrame.class, InstrukturFrame::new));
+        miKursus.addActionListener(e -> WindowManager.open(KursusFrame.class, KursusFrame::new));
+        miKelas.addActionListener(e -> WindowManager.open(KelasFrame.class, KelasFrame::new));
+        reg.addActionListener(e -> WindowManager.open(PendaftaranFrame.class, PendaftaranFrame::new));
+        pay.addActionListener(e -> WindowManager.open(PembayaranFrame.class, PembayaranFrame::new));
+        rp.addActionListener(e -> ReportService.showPeserta(this));
+        rr.addActionListener(e -> ReportService.showPendaftaranSemua(this));
+        rt.addActionListener(e -> ReportService.showPembayaranSemua(this));
+        rtp.addActionListener(e -> showPaymentPeriod());
+        logout.addActionListener(e -> logout());
+        exit.addActionListener(e -> System.exit(0));
 
-        JPanel welcomeCard = new JPanel();
-        welcomeCard.setLayout(new BoxLayout(welcomeCard, BoxLayout.Y_AXIS));
-        welcomeCard.setBackground(COLOR_CARD_BG);
-        welcomeCard.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(252, 231, 243), 1, true),
-            new EmptyBorder(45, 55, 45, 55)
-        ));
-
-        JLabel lblWelcomeTitle = new JLabel("Selamat Datang, Administrator!");
-        lblWelcomeTitle.setFont(new Font("Segoe UI", Font.BOLD, 26));
-        lblWelcomeTitle.setForeground(COLOR_TEXT_DARK);
-        lblWelcomeTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel lblWelcomeDesc = new JLabel("<html>Gunakan menu navigasi di atas untuk mengakses modul Master Data, memproses<br>pendaftaran kursus, serta melihat laporan rekapitulasi sistem secara real-time.</html>");
-        lblWelcomeDesc.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblWelcomeDesc.setForeground(COLOR_TEXT_MUTED);
-        lblWelcomeDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        welcomeCard.add(lblWelcomeTitle);
-        welcomeCard.add(Box.createRigidArea(new Dimension(0, 12)));
-        welcomeCard.add(lblWelcomeDesc);
-
-        centerContainer.add(welcomeCard);
-        mainPanel.add(centerContainer, BorderLayout.CENTER);
-
-        // --- MENU BAR ATAS ---
-        menuBar = new JMenuBar();
-        menuBar.setBackground(Color.WHITE);
-        menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(252, 231, 243)));
-
-        // 1. Menu Master
-        menuMaster = new JMenu("   Master   ");
-        menuMaster.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        miPeserta = new JMenuItem("Master Peserta");
-        miInstruktur = new JMenuItem("Master Instruktur");
-        miKursus = new JMenuItem("Master Kursus");
-        miKelas = new JMenuItem("Master Kelas");
-
-        miPeserta.addActionListener(this::miPesertaActionPerformed);
-        miInstruktur.addActionListener(this::miInstrukturActionPerformed);
-        miKursus.addActionListener(this::miKursusActionPerformed);
-        miKelas.addActionListener(this::miKelasActionPerformed);
-
-        menuMaster.add(miPeserta);
-        menuMaster.add(miInstruktur);
-        menuMaster.add(miKursus);
-        menuMaster.add(miKelas);
-        menuBar.add(menuMaster);
-
-        // 2. Menu Transaksi
-        menuTransaksi = new JMenu("   Transaksi   ");
-        menuTransaksi.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        miPendaftaran = new JMenuItem("Pendaftaran");
-        miPembayaran = new JMenuItem("Pembayaran");
-
-        miPendaftaran.addActionListener(this::miPendaftaranActionPerformed);
-        miPembayaran.addActionListener(this::miPembayaranActionPerformed);
-
-        menuTransaksi.add(miPendaftaran);
-        menuTransaksi.add(miPembayaran);
-        menuBar.add(menuTransaksi);
-
-        // 3. Menu Laporan
-        menuLaporan = new JMenu("   Laporan   ");
-        menuLaporan.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        miLaporanPeserta = new JMenuItem("Laporan Peserta");
-        miLaporanPendaftaran = new JMenuItem("Laporan Pendaftaran");
-
-        miLaporanPeserta.addActionListener(this::miLaporanPesertaActionPerformed);
-        miLaporanPendaftaran.addActionListener(this::miLaporanPendaftaranActionPerformed);
-
-        menuLaporan.add(miLaporanPeserta);
-        menuLaporan.add(miLaporanPendaftaran);
-        menuBar.add(menuLaporan);
-
-        // 4. Menu Keluar
-        menuKeluar = new JMenu("   Keluar   ");
-        menuKeluar.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        miLogout = new JMenuItem("Logout");
-        miTutup = new JMenuItem("Tutup Aplikasi");
-
-        miLogout.addActionListener(this::miLogoutActionPerformed);
-        miTutup.addActionListener(this::miTutupActionPerformed);
-
-        menuKeluar.add(miLogout);
-        menuKeluar.addSeparator();
-        menuKeluar.add(miTutup);
-        menuBar.add(menuKeluar);
-
-        setJMenuBar(menuBar);
-
-        // Memuat Ikon Portable
         miPeserta.setIcon(loadIcon("/icons/peserta.png"));
         miInstruktur.setIcon(loadIcon("/icons/instruktur.png"));
         miKursus.setIcon(loadIcon("/icons/kursus.png"));
         miKelas.setIcon(loadIcon("/icons/kelas.png"));
-
-        // --- POPUP MENU KLIK KANAN ---
-        popupDashboard = new JPopupMenu();
-        miTentang = new JMenuItem("Tentang Aplikasi");
-        miRefresh = new JMenuItem("Refresh Tampilan");
-
-        miTentang.addActionListener(this::miTentangActionPerformed);
-        miRefresh.addActionListener(e -> JOptionPane.showMessageDialog(this, "Dashboard berhasil disegarkan."));
-
-        popupDashboard.add(miTentang);
-        popupDashboard.add(miRefresh);
-
-        mainPanel.setComponentPopupMenu(popupDashboard);
-        centerContainer.setComponentPopupMenu(popupDashboard);
     }
 
     private ImageIcon loadIcon(String path) {
-        URL url = getClass().getResource(path);
-        if (url == null) return null;
-        ImageIcon icon = new ImageIcon(url);
-        Image img = icon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+        URL u = getClass().getResource(path);
+        if (u == null) return null;
+        Image img = new ImageIcon(u).getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
         return new ImageIcon(img);
     }
 
     private void applySession() {
-        User user = UserSession.getCurrentUser();
-        if (user == null) {
-            JOptionPane.showMessageDialog(this, "Session tidak ditemukan. Silakan login ulang.");
+        User u = UserSession.getCurrentUser();
+        if (u == null) {
             dispose();
             SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
             return;
         }
-
-        lblUser.setText("User: " + user.getUsername());
-        lblRole.setText("Role: " + user.getRole());
-
-        boolean admin = user.isAdmin();
+        lblUser.setText("Pengguna: " + u.getUsername());
+        lblRole.setText("Role: " + u.getRole());
+        boolean admin = u.isAdmin();
+        miUsers.setEnabled(admin);
         miInstruktur.setEnabled(admin);
         miKursus.setEnabled(admin);
         miKelas.setEnabled(admin);
         miPeserta.setEnabled(true);
-        menuTransaksi.setEnabled(true);
-        menuLaporan.setEnabled(true);
     }
 
-    // --- PENGARAHAN MENU ---
-    private void miPesertaActionPerformed(ActionEvent evt) {
-        WindowManager.open(MasterPeserta.class, MasterPeserta::new);
-    }
-
-    private void miInstrukturActionPerformed(ActionEvent evt) {
-        WindowManager.open(InstrukturFrame.class, InstrukturFrame::new);
-    }
-
-    private void miKursusActionPerformed(ActionEvent evt) {
-        WindowManager.open(FormPendaftaranKursus.class, FormPendaftaranKursus::new);
-    }
-
-    private void miKelasActionPerformed(ActionEvent evt) {
-        WindowManager.open(FormPeserta.class, FormPeserta::new);
-    }
-
-    private void miPendaftaranActionPerformed(ActionEvent evt) {
-        WindowManager.open(FormPendaftaranKursus.class, FormPendaftaranKursus::new);
-    }
-
-    private void miPembayaranActionPerformed(ActionEvent evt) {
-        JOptionPane.showMessageDialog(this, "Modul Pembayaran sedang dikembangkan pada tahap project berikutnya.");
-    }
-
-    private void miLaporanPesertaActionPerformed(ActionEvent evt) {
-        JOptionPane.showMessageDialog(this, "Modul laporan diaktifkan pada Pertemuan 12 dengan Jaspersoft Studio.");
-    }
-
-    private void miLaporanPendaftaranActionPerformed(ActionEvent evt) {
-        JOptionPane.showMessageDialog(this, "Modul laporan diaktifkan pada Pertemuan 12 dengan Jaspersoft Studio.");
-    }
-
-    private void miLogoutActionPerformed(ActionEvent evt) {
-        int pilihan = JOptionPane.showConfirmDialog(this, "Logout dari aplikasi?", "Konfirmasi Logout", JOptionPane.YES_NO_OPTION);
-        if (pilihan == JOptionPane.YES_OPTION) {
-            WindowManager.closeAll();
-            UserSession.clear();
-            dispose();
-            SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
+    private void showPaymentPeriod() {
+        String a = JOptionPane.showInputDialog(this, "Tanggal awal (yyyy-MM-dd):", ViewUtil.today());
+        if (a == null) return;
+        String b = JOptionPane.showInputDialog(this, "Tanggal akhir (yyyy-MM-dd):", ViewUtil.today());
+        if (b == null) return;
+        try {
+            ReportService.showPembayaranPeriode(this, Date.valueOf(a.trim()), Date.valueOf(b.trim()));
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, "Format tanggal harus yyyy-MM-dd.");
         }
     }
 
-    private void miTutupActionPerformed(ActionEvent evt) {
-        int pilihan = JOptionPane.showConfirmDialog(this, "Tutup aplikasi SIKURSUS?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
-        if (pilihan == JOptionPane.YES_OPTION) {
-            System.exit(0);
-        }
-    }
-
-    private void miTentangActionPerformed(ActionEvent evt) {
-        JOptionPane.showMessageDialog(this, "SIKURSUS Desktop Management\nProject PBO Program Studi Informatika");
+    private void logout() {
+        WindowManager.closeAll();
+        UserSession.clear();
+        dispose();
+        SwingUtilities.invokeLater(() -> new LoginFrame().setVisible(true));
     }
 }

@@ -2,90 +2,60 @@ package model;
 
 public class Peserta extends Orang {
     private String nim;
+    private String jenisKelamin;
     private String prodi;
-    private String jenisKelamin; 
-    private String email;        
+    private String email;
 
-    // =========================================================================
-    // CONSTRUCTOR DEFAULT (Wajib Ada untuk PesertaDAO)
-    // =========================================================================
-    public Peserta() {
-        super();
-    }
+    public Peserta() {}
 
-    // =========================================================================
-    // CONSTRUCTOR 1: Untuk UjiValidasi & DemoPolymorphism (Mendukung Kode Lama)
-    // =========================================================================
-    public Peserta(int id, String nama, String noHp, String nim, String prodi) {
+    public Peserta(int id, String nama, String jenisKelamin, String prodi,
+                   String noHp, String email, String nim) {
         super(id, nama, noHp);
-        this.nim = nim;
-        this.prodi = prodi;
-        this.jenisKelamin = "L"; 
-        this.email = "";
+        setNim(nim);
+        setJenisKelamin(jenisKelamin);
+        setProdi(prodi);
+        setEmail(email);
     }
 
-    // =========================================================================
-    // CONSTRUCTOR 2: Untuk Form GUI & Simpan Database (Mendukung Kode Baru)
-    // =========================================================================
-    public Peserta(String nim, String nama, String jenisKelamin, String prodi, String noHp, String email) {
-        super(0, nama, noHp); 
-        this.nim = nim;
-        this.prodi = prodi;
-        this.jenisKelamin = jenisKelamin;
-        this.email = email;
+    // Konstruktor kompatibilitas untuk praktikum P5/P6 lama.
+    public Peserta(int id, String nama, String noHp, String nim, String prodi) {
+        this(id, nama, "L", prodi, noHp,
+                (nim == null ? "" : nim.trim()) + "@example.test", nim);
     }
 
-    // =========================================================================
-    // GETTER & SETTER
-    // =========================================================================
-    public String getNim() {
-        return nim;
+    public String getNim() { return nim; }
+    public final void setNim(String nim) {
+        if (nim == null || nim.trim().isEmpty()) throw new IllegalArgumentException("NIM wajib diisi");
+        this.nim = nim.trim();
     }
 
-    public void setNim(String nim) {
-        this.nim = (nim != null) ? nim.trim() : "";
+    public String getJenisKelamin() { return jenisKelamin; }
+    public final void setJenisKelamin(String jenisKelamin) {
+        String value = jenisKelamin == null ? "" : jenisKelamin.trim().toUpperCase();
+        if (!"L".equals(value) && !"P".equals(value)) {
+            throw new IllegalArgumentException("Jenis kelamin harus L atau P");
+        }
+        this.jenisKelamin = value;
     }
 
-    public String getProdi() {
-        return prodi;
+    public String getProdi() { return prodi; }
+    public final void setProdi(String prodi) {
+        if (prodi == null || prodi.trim().isEmpty()) throw new IllegalArgumentException("Prodi wajib diisi");
+        this.prodi = prodi.trim();
     }
 
-    public void setProdi(String prodi) {
-        this.prodi = (prodi != null) ? prodi.trim() : "";
-    }
-
-    public String getJenisKelamin() {
-        return jenisKelamin;
-    }
-
-    public void setJenisKelamin(String jenisKelamin) {
-        this.jenisKelamin = jenisKelamin;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    // =========================================================================
-    // ALIAS METHOD UNTUK NOMOR HP (Mencegah Error di FormPeserta)
-    // =========================================================================
-    public String getNomorHp() {
-        return getNoHp();
-    }
-
-    public void setNomorHp(String nomorHp) {
-        setNoHp(nomorHp);
+    public String getEmail() { return email == null ? "" : email; }
+    public final void setEmail(String email) {
+        String value = email == null ? "" : email.trim();
+        if (!value.isEmpty() && !value.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new IllegalArgumentException("Format email tidak valid");
+        }
+        this.email = value;
     }
 
     @Override
     public String getInfo() {
-        return "PESERTA | " + super.getInfo()
-                + " | NIM: " + getNim()
-                + " | Prodi: " + getProdi()
-                + " | JK: " + getJenisKelamin();
+        return "PESERTA | " + super.getInfo() + " | NIM: " + getNim()
+                + " | JK: " + getJenisKelamin() + " | Prodi: " + getProdi();
     }
 }

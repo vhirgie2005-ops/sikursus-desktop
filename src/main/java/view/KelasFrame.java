@@ -1,141 +1,145 @@
 package view;
 
+import dao.InstrukturDAO;
+import dao.KelasDAO;
+import dao.KursusDAO;
+import java.awt.BorderLayout;
+import java.sql.SQLException;
+import java.util.List;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
+import javax.swing.table.DefaultTableModel;
+import model.Kelas;
+import util.LookupItem;
+import util.Validation;
 
 public class KelasFrame extends JFrame {
-
-    private JTextField txtIdKelas, txtNamaKelas, txtJadwal;
-    private JTable table;
-    private JButton btnSimpan, btnEdit, btnHapus, btnReset;
-
-    // --- PALET WARNA PINK MODERN & ELEGAN (MENYESUAIKAN DASHBOARD) ---
-    private static final Color COLOR_PRIMARY = new Color(131, 24, 67);      // Rose/Berry Pekat Elegan (#831843)
-    private static final Color COLOR_BG = new Color(253, 242, 248);         // Soft Pink Background Sangat Bersih (#FDF2F8)
-    private static final Color COLOR_TEXT_DARK = new Color(50, 20, 40);     // Teks gelap dengan sentuhan hangat
-    private static final Color COLOR_MUTED_BG = new Color(252, 231, 243);   // Soft Pink untuk tombol sekunder
+    private final JComboBox<LookupItem> kursus = new JComboBox<>();
+    private final JComboBox<LookupItem> instruktur = new JComboBox<>();
+    private final JTextField nama = new JTextField();
+    private final JTextField tanggal = new JTextField(ViewUtil.today());
+    private final JTextField kapasitas = new JTextField("20");
+    private final JTextField search = new JTextField(18);
+    private final JTable table = new JTable(ViewUtil.tableModel("ID", "Kelas", "Kursus", "Instruktur", "Tanggal Mulai", "Kapasitas"));
+    private final KelasDAO dao = new KelasDAO();
+    private int selected = -1;
 
     public KelasFrame() {
-        setTitle("Master Kelas - SIKURSUS Desktop");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(750, 520);
-        setLocationRelativeTo(null);
-        initComponents();
+        super("Master Kelas - SIKURSUS Desktop");
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        ViewUtil.setupFrame(this, 1040, 720);
+        build();
+        loadLookups();
+        load("");
     }
 
-    private void initComponents() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(COLOR_BG);
-        setContentPane(mainPanel);
+    private void build() {
+        JPanel root = ViewUtil.root("Master Data Kelas");
+        JPanel body = ViewUtil.body();
+        JPanel form = ViewUtil.formPanel();
+        ViewUtil.addFormRow(form, 0, "Kursus", kursus);
+        ViewUtil.addFormRow(form, 1, "Instruktur", instruktur);
+        ViewUtil.addFormRow(form, 2, "Nama Kelas", nama);
+        ViewUtil.addFormRow(form, 3, "Tanggal Mulai (yyyy-MM-dd)", tanggal);
+        ViewUtil.addFormRow(form, 4, "Kapasitas", kapasitas);
 
-        // Header Banner
-        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        headerPanel.setBackground(COLOR_PRIMARY);
-        headerPanel.setBorder(new EmptyBorder(18, 15, 18, 15));
-        
-        JLabel lblTitle = new JLabel("Form Master Kelas");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTitle.setForeground(Color.WHITE);
-        headerPanel.add(lblTitle);
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        JButton simpan = ViewUtil.primaryButton("Simpan");
+        JButton ubah = ViewUtil.updateButton("Ubah");
+        JButton hapus = ViewUtil.dangerButton("Hapus");
+        JButton reset = ViewUtil.neutralButton("Reset");
+        JPanel formBox = new JPanel(new BorderLayout());
+        formBox.setBackground(ViewUtil.BG);
+        formBox.add(form, BorderLayout.CENTER);
+        formBox.add(ViewUtil.actionPanel(simpan, ubah, hapus, reset), BorderLayout.SOUTH);
 
-        // Form Content Panel
-        JPanel contentPanel = new JPanel(new GridBagLayout());
-        contentPanel.setOpaque(false);
-        contentPanel.setBorder(new EmptyBorder(20, 25, 20, 25));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.anchor = GridBagConstraints.WEST;
+        JButton cari = ViewUtil.updateButton("Cari");
+        JPanel tableBox = new JPanel(new BorderLayout(0, 8));
+        tableBox.setBackground(ViewUtil.CARD);
+        tableBox.add(ViewUtil.searchPanel("Pencarian", search, cari), BorderLayout.NORTH);
+        tableBox.add(ViewUtil.tableScroll(table), BorderLayout.CENTER);
 
-        // ID Kelas
-        gbc.gridx = 0; gbc.gridy = 0;
-        JLabel lblId = new JLabel("ID Kelas");
-        lblId.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblId.setForeground(COLOR_TEXT_DARK);
-        contentPanel.add(lblId, gbc);
+        body.add(ViewUtil.section("Form Kelas", formBox), BorderLayout.NORTH);
+        body.add(ViewUtil.section("Data Kelas", tableBox), BorderLayout.CENTER);
+        root.add(body, BorderLayout.CENTER);
+        setContentPane(root);
 
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        txtIdKelas = new JTextField(20);
-        txtIdKelas.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        contentPanel.add(txtIdKelas, gbc);
-
-        // Nama Kelas
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.0;
-        JLabel lblNama = new JLabel("Nama Kelas");
-        lblNama.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblNama.setForeground(COLOR_TEXT_DARK);
-        contentPanel.add(lblNama, gbc);
-
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
-        txtNamaKelas = new JTextField(20);
-        txtNamaKelas.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        contentPanel.add(txtNamaKelas, gbc);
-
-        // Jadwal
-        gbc.gridx = 0; gbc.gridy = 2;
-        JLabel lblJadwal = new JLabel("Jadwal Pertemuan");
-        lblJadwal.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblJadwal.setForeground(COLOR_TEXT_DARK);
-        contentPanel.add(lblJadwal, gbc);
-
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
-        txtJadwal = new JTextField(20);
-        txtJadwal.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        contentPanel.add(txtJadwal, gbc);
-
-        // Tombol Aksi
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 10));
-        btnPanel.setOpaque(false);
-        
-        btnSimpan = new JButton("SIMPAN");
-        btnSimpan.setBackground(COLOR_PRIMARY);
-        btnSimpan.setForeground(Color.WHITE);
-        btnSimpan.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnSimpan.setFocusPainted(false);
-        btnSimpan.addActionListener(e -> JOptionPane.showMessageDialog(this, "Data Kelas berhasil disimpan."));
-
-        btnEdit = new JButton("EDIT");
-        btnEdit.setBackground(COLOR_MUTED_BG);
-        btnEdit.setForeground(COLOR_PRIMARY);
-        btnEdit.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnEdit.setFocusPainted(false);
-
-        btnHapus = new JButton("HAPUS");
-        btnHapus.setBackground(COLOR_MUTED_BG);
-        btnHapus.setForeground(COLOR_PRIMARY);
-        btnHapus.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnHapus.setFocusPainted(false);
-
-        btnReset = new JButton("RESET");
-        btnReset.setBackground(COLOR_MUTED_BG);
-        btnReset.setForeground(COLOR_PRIMARY);
-        btnReset.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnReset.setFocusPainted(false);
-        btnReset.addActionListener(e -> { txtIdKelas.setText(""); txtNamaKelas.setText(""); txtJadwal.setText(""); });
-
-        btnPanel.add(btnSimpan);
-        btnPanel.add(btnEdit);
-        btnPanel.add(btnHapus);
-        btnPanel.add(btnReset);
-
-        gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
-        contentPanel.add(btnPanel, gbc);
-
-        // Tabel
-        table = new JTable(new Object[][]{}, new String[]{"ID Kelas", "Nama Kelas", "Jadwal Pertemuan"});
-        table.setRowHeight(24);
-        table.getTableHeader().setBackground(COLOR_PRIMARY);
-        table.getTableHeader().setForeground(Color.WHITE);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-
-        JScrollPane scroll = new JScrollPane(table);
-        scroll.setPreferredSize(new Dimension(650, 160));
-
-        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2; gbc.fill = GridBagConstraints.BOTH;
-        gbc.weighty = 1.0;
-        contentPanel.add(scroll, gbc);
-
-        mainPanel.add(contentPanel, BorderLayout.CENTER);
+        simpan.addActionListener(e -> save());
+        ubah.addActionListener(e -> update());
+        hapus.addActionListener(e -> delete());
+        reset.addActionListener(e -> clear());
+        cari.addActionListener(e -> load(search.getText()));
+        search.addActionListener(e -> load(search.getText()));
+        table.getSelectionModel().addListSelectionListener(e -> pick());
+        getRootPane().setDefaultButton(simpan);
     }
+
+    private void loadLookups() {
+        try {
+            kursus.removeAllItems();
+            for (LookupItem x : new KursusDAO().lookup()) kursus.addItem(x);
+            instruktur.removeAllItems();
+            for (LookupItem x : new InstrukturDAO().lookup()) instruktur.addItem(x);
+        } catch (SQLException ex) { ViewUtil.sqlError(this, "Memuat pilihan kelas", ex); }
+    }
+
+    private Kelas data() {
+        LookupItem k = (LookupItem) kursus.getSelectedItem();
+        LookupItem i = (LookupItem) instruktur.getSelectedItem();
+        if (k == null || i == null) throw new IllegalArgumentException("Kursus dan instruktur wajib tersedia");
+        Kelas x = new Kelas();
+        x.setIdKelas(Math.max(selected, 0));
+        x.setIdKursus(k.getId());
+        x.setIdInstruktur(i.getId());
+        x.setNamaKelas(nama.getText());
+        x.setTanggalMulai(Validation.date(tanggal.getText(), "Tanggal mulai"));
+        x.setKapasitas(Validation.positiveInt(kapasitas.getText(), "Kapasitas"));
+        return x;
+    }
+
+    private void save() { try { dao.insert(data()); load(""); clear(); } catch (Exception ex) { handle(ex, "Menyimpan kelas"); } }
+    private void update() { if (selected < 0) { JOptionPane.showMessageDialog(this, "Pilih kelas."); return; } try { dao.update(data()); load(""); clear(); } catch (Exception ex) { handle(ex, "Mengubah kelas"); } }
+    private void delete() { if (selected < 0) return; if (JOptionPane.showConfirmDialog(this, "Hapus kelas?", "Konfirmasi", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return; try { dao.delete(selected); load(""); clear(); } catch (SQLException ex) { ViewUtil.sqlError(this, "Menghapus kelas", ex); } }
+
+    private void load(String q) {
+        try {
+            List<Kelas> list = dao.search(q);
+            DefaultTableModel m = (DefaultTableModel) table.getModel();
+            m.setRowCount(0);
+            for (Kelas x : list) {
+                m.addRow(new Object[]{x.getIdKelas(), x.getNamaKelas(), x.getKodeKursus() + " - " + x.getNamaKursus(), x.getNamaInstruktur(), x.getTanggalMulai(), x.getKapasitas()});
+            }
+        } catch (SQLException ex) { ViewUtil.sqlError(this, "Memuat kelas", ex); }
+    }
+
+    private void pick() {
+        int r = table.getSelectedRow();
+        if (r < 0) return;
+        selected = Integer.parseInt(table.getValueAt(r, 0).toString());
+        try {
+            for (Kelas x : dao.findAll()) {
+                if (x.getIdKelas() == selected) {
+                    nama.setText(x.getNamaKelas());
+                    tanggal.setText(x.getTanggalMulai().toString());
+                    kapasitas.setText(String.valueOf(x.getKapasitas()));
+                    ViewUtil.selectLookup(kursus, x.getIdKursus());
+                    ViewUtil.selectLookup(instruktur, x.getIdInstruktur());
+                    break;
+                }
+            }
+        } catch (SQLException ex) { ViewUtil.sqlError(this, "Membaca kelas", ex); }
+    }
+
+    private void clear() {
+        selected = -1;
+        nama.setText("");
+        tanggal.setText(ViewUtil.today());
+        kapasitas.setText("20");
+        if (kursus.getItemCount() > 0) kursus.setSelectedIndex(0);
+        if (instruktur.getItemCount() > 0) instruktur.setSelectedIndex(0);
+        table.clearSelection();
+        loadLookups();
+        nama.requestFocus();
+    }
+
+    private void handle(Exception ex, String action) { if (ex instanceof SQLException) ViewUtil.sqlError(this, action, (SQLException) ex); else JOptionPane.showMessageDialog(this, ex.getMessage()); }
 }

@@ -1,11 +1,10 @@
 package model;
 
+/**
+ * Latihan penguatan Pertemuan 6: subtype baru tanpa mengubah loop polimorfik.
+ */
 public class Admin extends Orang {
     private String role;
-
-    public Admin() {
-        super(0, "", "");
-    }
 
     public Admin(int id, String nama, String noHp, String role) {
         super(id, nama, noHp);
